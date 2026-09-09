@@ -1,22 +1,52 @@
+"use client";
+
+import { useState } from "react";
 import type { Kit, KitQuestion } from "@/lib/kitTypes";
+import { regenerateSchedule } from "@/lib/kits";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-export function ScheduleView({
-  schedule,
-  questions,
-}: {
+interface ScheduleViewProps {
+  kitId?: string;
   schedule: Kit["schedule"];
   questions: KitQuestion[];
-}) {
+  editable?: boolean;
+  onKitUpdate?: (kit: Kit) => void;
+}
+
+/**
+ * Read-only display — the schedule is derived from the current question
+ * set, not hand-edited. "Recompute" re-runs allocateSchedule server-side,
+ * useful after adding/removing/moving questions changes what should be
+ * scheduled.
+ */
+export function ScheduleView({ kitId, schedule, questions, editable = false, onKitUpdate }: ScheduleViewProps) {
+  const [isRecomputing, setIsRecomputing] = useState(false);
+
   if (!schedule) return null;
 
   const questionById = new Map(questions.map((q) => [q.id, q]));
 
+  async function handleRecompute() {
+    if (!kitId || !onKitUpdate) return;
+    setIsRecomputing(true);
+    try {
+      onKitUpdate(await regenerateSchedule(kitId));
+    } finally {
+      setIsRecomputing(false);
+    }
+  }
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="text-lg">Study schedule</CardTitle>
+        {editable && kitId && onKitUpdate && (
+          <Button variant="outline" size="sm" onClick={handleRecompute} disabled={isRecomputing}>
+            {isRecomputing ? "Recomputing..." : "Recompute schedule"}
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <Accordion defaultValue={[schedule.days[0]?.day]}>

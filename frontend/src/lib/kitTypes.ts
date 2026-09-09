@@ -14,13 +14,18 @@ export interface KitRequirement {
   priority: "must" | "nice";
 }
 
+export type EditableItemSource = "generated" | "edited" | "manual";
+
+export type QuestionCategory = "technical" | "behavioural" | "system-design" | "company-fit";
+
 export interface KitQuestion {
   id: string;
   requirement_ids: string[];
-  category: "technical" | "behavioural" | "system-design" | "company-fit";
+  category: QuestionCategory;
   prompt: string;
   answer_outline: string;
   difficulty: 1 | 2 | 3;
+  source?: EditableItemSource;
 }
 
 export interface KitFlashcard {
@@ -28,6 +33,7 @@ export interface KitFlashcard {
   front: string;
   back: string;
   requirement_ids: string[];
+  source?: EditableItemSource;
 }
 
 export interface KitScheduleDay {
