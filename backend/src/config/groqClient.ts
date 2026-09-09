@@ -14,7 +14,12 @@ export class LLMError extends Error {
   }
 }
 
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+// Groq's hosted model lineup changes over time; llama-3.3-70b-versatile has
+// since been retired (confirmed via a live clean-environment run against
+// the models list endpoint, which no longer lists it at all). This is
+// current as of this writing but not guaranteed to stay so — if this model
+// disappears too, check `client.models.list()` for what's currently active.
+const DEFAULT_MODEL = 'openai/gpt-oss-20b';
 const BASE_DELAY_MS = 1000;
 const MAX_RETRIES = 3;
 
