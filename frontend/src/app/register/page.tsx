@@ -4,6 +4,17 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -37,8 +48,7 @@ export default function RegisterPage() {
       setUser(data.user);
       router.push("/dashboard");
     } catch (err) {
-      const message = getErrorMessage(err);
-      setError(message);
+      setError(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -46,54 +56,58 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-12">
-      <h1 className="text-2xl font-semibold text-foreground">Create an account</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Create an account</CardTitle>
+          <CardDescription>Sign up to get started.</CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm text-foreground">
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded border border-border bg-surface px-3 py-2 text-foreground"
-          />
-        </label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        <label className="flex flex-col gap-1 text-sm text-foreground">
-          Password
-          <input
-            type="password"
-            required
-            minLength={MIN_PASSWORD_LENGTH}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="rounded border border-border bg-surface px-3 py-2 text-foreground"
-          />
-        </label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="confirmPassword">Confirm password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                required
+                minLength={MIN_PASSWORD_LENGTH}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
+            </div>
 
-        <label className="flex flex-col gap-1 text-sm text-foreground">
-          Confirm password
-          <input
-            type="password"
-            required
-            minLength={MIN_PASSWORD_LENGTH}
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="rounded border border-border bg-surface px-3 py-2 text-foreground"
-          />
-        </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </CardContent>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-2 rounded bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-50"
-        >
-          {isSubmitting ? "Creating account..." : "Create account"}
-        </button>
-      </form>
+          <CardFooter>
+            <Button type="submit" disabled={isSubmitting} className="w-full">
+              {isSubmitting ? "Creating account..." : "Create account"}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }

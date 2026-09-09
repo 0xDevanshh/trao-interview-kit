@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/store/authStore";
 
 export function NavAuthControls() {
@@ -22,27 +23,23 @@ export function NavAuthControls() {
 
   if (isAuthenticated) {
     return (
-      <div className="flex items-center gap-4 text-sm">
-        <span className="text-muted">{user?.email}</span>
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="text-muted hover:text-foreground"
-        >
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">{user?.email}</span>
+        <Button variant="outline" size="sm" onClick={handleLogout}>
           Logout
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="flex gap-4 text-sm">
-      <Link href="/login" className="text-muted hover:text-foreground">
+    <div className="flex items-center gap-2">
+      <Button variant="ghost" size="sm" render={<Link href="/login" />}>
         Login
-      </Link>
-      <Link href="/register" className="text-muted hover:text-foreground">
+      </Button>
+      <Button variant="default" size="sm" render={<Link href="/register" />}>
         Register
-      </Link>
+      </Button>
     </div>
   );
 }
