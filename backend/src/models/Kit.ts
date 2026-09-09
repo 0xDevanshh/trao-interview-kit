@@ -112,6 +112,11 @@ const kitSchema = new Schema(
       default: 'draft',
     },
     error: { type: errorSchema, required: false },
+    // Internal only — not part of Appendix A / kitSchema, so
+    // validateKitStructure never sees it. Needed so POST /:id/generate can
+    // re-run the pipeline (including "Retry" after a failure) without the
+    // client having to resend the original JD.
+    jd: { type: String, required: false },
     source: { type: sourceSchema, required: false },
     company_brief: { type: companyBriefSchema, required: false },
     role: { type: roleSchema, required: false },

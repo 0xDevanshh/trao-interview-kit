@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { KitModel, type KitDocument } from '../models/Kit.js';
 import { validateKitStructure } from '../schemas/kitValidation.js';
 import type { Kit } from '../schemas/kitSchema.js';
+import { generateKit } from '../pipeline/generateKit.js';
 
 const createKitSchema = z.object({
   jd: z.string().min(1),
@@ -62,6 +63,7 @@ function serializeKit(kit: KitDocument & { _id: unknown }) {
   return {
     id: String(kit._id),
     status: kit.status,
+    error: kit.error ?? null,
     createdAt: kit.createdAt,
     updatedAt: kit.updatedAt,
     source: kit.source,
@@ -96,6 +98,7 @@ export async function createKit(req: Request, res: Response, next: NextFunction)
     const kit = await KitModel.create({
       ownerId,
       status: 'draft',
+      jd,
       ...body,
     });
 
@@ -227,6 +230,50 @@ export async function patchKit(req: Request, res: Response, next: NextFunction):
     await kit.save();
 
     res.status(200).json({ kit: serializeKit(kit) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function generateKitRoute(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const ownerId = req.userId;
+    if (!ownerId) {
+      res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'No token provided' } });
+      return;
+    }
+
+    const { id } = req.params;
+    if (!id || !isValidObjectId(id)) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Kit not found' } });
+      return;
+    }
+
+    const kit = await KitModel.findById(id);
+    if (!kit || kit.ownerId.toString() !== ownerId) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Kit not found' } });
+      return;
+    }
+
+    if (kit.status === 'generating') {
+      res.status(409).json({ error: { code: 'ALREADY_GENERATING', message: 'This kit is already generating' } });
+      return;
+    }
+
+    if (!kit.jd || !kit.source?.company_url || !kit.schedule?.days_available) {
+      res.status(409).json({
+        error: { code: 'MISSING_INPUTS', message: 'This kit is missing the inputs needed to generate it' },
+      });
+      return;
+    }
+
+    // Fire-and-forget: generation takes well over a minute, so this route
+    // returns immediately and the client polls GET /:id for status. Any
+    // failure inside generateKit is caught there and recorded on the kit
+    // document itself (status "failed" + error) — nothing to await here.
+    void generateKit(String(kit._id), kit.jd, kit.source.company_url, kit.schedule.days_available);
+
+    res.status(202).json({ kit: serializeKit(kit) });
   } catch (err) {
     next(err);
   }
