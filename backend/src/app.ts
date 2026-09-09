@@ -3,6 +3,7 @@ import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
+import kitRoutes from './routes/kitRoutes.js';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/kits', kitRoutes);
 
 app.use(errorHandler);
 

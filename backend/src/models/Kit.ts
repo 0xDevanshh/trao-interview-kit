@@ -111,7 +111,7 @@ const kitSchema = new Schema(
     schedule: { type: scheduleSchema, required: false },
     coverage: { type: coverageSchema, required: false },
   },
-  { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } },
+  { timestamps: true },
 );
 
 export type KitDocument = InferSchemaType<typeof kitSchema>;
