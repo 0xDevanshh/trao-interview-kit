@@ -28,12 +28,20 @@ export interface KitQuestion {
   source?: EditableItemSource;
 }
 
+export interface FlashcardPractice {
+  timesReviewed: number;
+  /** 1 = low confidence ("didn't know it"), 3 = high confidence ("knew it cold"). */
+  lastConfidence: 1 | 2 | 3 | null;
+  lastReviewedAt: string | null;
+}
+
 export interface KitFlashcard {
   id: string;
   front: string;
   back: string;
   requirement_ids: string[];
   source?: EditableItemSource;
+  practice?: FlashcardPractice;
 }
 
 export interface KitScheduleDay {

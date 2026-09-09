@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import type { Kit, QuestionCategory } from "@/lib/kitTypes";
+import type { Kit, KitFlashcard, QuestionCategory } from "@/lib/kitTypes";
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -160,4 +160,31 @@ export async function deleteFlashcard(kitId: string, flashcardId: string): Promi
 export async function regenerateSchedule(kitId: string): Promise<Kit> {
   const { data } = await api.post<{ kit: Kit }>(`/api/kits/${kitId}/regenerate/schedule`);
   return data.kit;
+}
+
+// ---------------------------------------------------------------------------
+// Practice mode (Phase 10)
+// ---------------------------------------------------------------------------
+
+export interface PracticeSessionResponse {
+  flashcards: KitFlashcard[];
+  coveredCount: number;
+  totalCount: number;
+}
+
+export async function fetchPracticeSession(kitId: string): Promise<PracticeSessionResponse> {
+  const { data } = await api.get<PracticeSessionResponse>(`/api/kits/${kitId}/practice/session`);
+  return data;
+}
+
+export async function reviewFlashcard(
+  kitId: string,
+  flashcardId: string,
+  confidence: 1 | 2 | 3,
+): Promise<KitFlashcard> {
+  const { data } = await api.post<{ flashcard: KitFlashcard }>(
+    `/api/kits/${kitId}/flashcards/${flashcardId}/review`,
+    { confidence },
+  );
+  return data.flashcard;
 }
