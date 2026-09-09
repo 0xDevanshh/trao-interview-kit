@@ -94,6 +94,14 @@ const coverageSchema = new Schema(
   { _id: false },
 );
 
+const errorSchema = new Schema(
+  {
+    message: { type: String, required: true },
+    details: { type: [String], required: false },
+  },
+  { _id: false },
+);
+
 const kitSchema = new Schema(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -103,6 +111,7 @@ const kitSchema = new Schema(
       enum: ['draft', 'generating', 'ready', 'failed'],
       default: 'draft',
     },
+    error: { type: errorSchema, required: false },
     source: { type: sourceSchema, required: false },
     company_brief: { type: companyBriefSchema, required: false },
     role: { type: roleSchema, required: false },
