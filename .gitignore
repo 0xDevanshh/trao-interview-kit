@@ -7,8 +7,12 @@ node_modules/
 out/
 dist/
 build/
-coverage/
 *.tsbuildinfo
+
+# Test coverage reports (not src/services/coverage/ — anchored to avoid matching that)
+/coverage/
+backend/coverage/
+frontend/coverage/
 
 # Environment files
 .env
