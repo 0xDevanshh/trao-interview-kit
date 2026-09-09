@@ -13,6 +13,9 @@ export interface GeneratedFlashcard {
   front: string;
   back: string;
   requirement_ids: [string];
+  // Every flashcard this function produces is freshly generated — "edited"/
+  // "manual" only ever get set later, by the builder (Phase 8), never here.
+  source: 'generated';
 }
 
 export interface GenerateFlashcardsOptions {
@@ -82,5 +85,6 @@ export async function generateFlashcardsForRequirement(
     front: flashcard.front,
     back: flashcard.back,
     requirement_ids: [requirement.id],
+    source: 'generated' as const,
   }));
 }

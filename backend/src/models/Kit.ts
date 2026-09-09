@@ -10,6 +10,19 @@ const requirementSchema = new Schema(
   { _id: false },
 );
 
+// Provenance for editable items — an extension on top of Appendix A (the
+// brief permits this as long as required fields stay present and exactly
+// named). Any kit saved before this field existed has no "source" key at
+// all in its stored document; Mongoose applies this same default on read,
+// so old kits correctly come back as fully "generated" (i.e. still safe to
+// regenerate wholesale) rather than accidentally locked as user-edited.
+const EDITABLE_ITEM_SOURCE_VALUES = ['generated', 'edited', 'manual'] as const;
+const editableItemSourceField = {
+  type: String,
+  enum: EDITABLE_ITEM_SOURCE_VALUES,
+  default: 'generated',
+} as const;
+
 const questionSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -22,6 +35,7 @@ const questionSchema = new Schema(
     prompt: { type: String, required: true },
     answer_outline: { type: String, required: true },
     difficulty: { type: Number, required: true, enum: [1, 2, 3] },
+    source: editableItemSourceField,
   },
   { _id: false },
 );
@@ -32,6 +46,7 @@ const flashcardSchema = new Schema(
     front: { type: String, required: true },
     back: { type: String, required: true },
     requirement_ids: { type: [String], required: true, default: [] },
+    source: editableItemSourceField,
   },
   { _id: false },
 );

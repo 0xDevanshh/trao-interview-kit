@@ -11,6 +11,14 @@ export const requirementSchema = z.object({
   priority: z.enum(['must', 'nice']),
 });
 
+// Provenance of an editable item, added on top of Appendix A (the brief
+// permits extending the shape as long as required fields stay present and
+// exactly named). Anything generated before this field existed has no
+// "source" key at all; defaulting it to "generated" is the correct
+// backward-compatible assumption — those kits are still fully regenerable,
+// nothing old is accidentally treated as user-locked.
+export const editableItemSourceSchema = z.enum(['generated', 'edited', 'manual']).default('generated');
+
 export const questionSchema = z.object({
   id: z.string(),
   requirement_ids: z.array(z.string()),
@@ -18,6 +26,7 @@ export const questionSchema = z.object({
   prompt: z.string(),
   answer_outline: z.string(),
   difficulty: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  source: editableItemSourceSchema,
 });
 
 export const flashcardSchema = z.object({
@@ -25,6 +34,7 @@ export const flashcardSchema = z.object({
   front: z.string(),
   back: z.string(),
   requirement_ids: z.array(z.string()),
+  source: editableItemSourceSchema,
 });
 
 export const scheduleDaySchema = z.object({
@@ -72,3 +82,4 @@ export type KitRequirement = z.infer<typeof requirementSchema>;
 export type KitQuestion = z.infer<typeof questionSchema>;
 export type KitFlashcard = z.infer<typeof flashcardSchema>;
 export type KitScheduleDay = z.infer<typeof scheduleDaySchema>;
+export type EditableItemSource = z.infer<typeof editableItemSourceSchema>;

@@ -17,6 +17,9 @@ export interface GeneratedQuestion {
   prompt: string;
   answer_outline: string;
   difficulty: 1 | 2 | 3;
+  // Every question this function produces is freshly generated — "edited"/
+  // "manual" only ever get set later, by the builder (Phase 8), never here.
+  source: 'generated';
 }
 
 export interface GenerateQuestionsOptions {
@@ -142,5 +145,6 @@ export async function generateQuestionsForRequirement(
     prompt: question.prompt,
     answer_outline: question.answer_outline,
     difficulty: question.difficulty,
+    source: 'generated' as const,
   }));
 }
