@@ -1,3 +1,4 @@
+import net from 'node:net';
 import pLimit from 'p-limit';
 import { LLMError } from '../config/groqClient.js';
 import { validateKitStructure } from '../schemas/kitValidation.js';
@@ -56,10 +57,21 @@ export class KitGenerationError extends Error {
  * looks at role/requirements; retrieval takes a name as input rather than
  * producing one). The only signal available is the company URL itself, so
  * that's what this guesses from — pure string logic, no LLM call.
+ *
+ * When the host is a bare IP or "localhost" (exactly what the batch harness
+ * uses — Section 9 serves company sites from localhost), the first-label
+ * heuristic produces nonsense (e.g. "127" for 127.0.0.1). There's no real
+ * hostname to guess from in that case, so this falls back to the full URL
+ * rather than fabricating a misleading label.
  */
 function guessCompanyName(companyUrl: string): string {
   try {
     const hostname = new URL(companyUrl).hostname.replace(/^www\./, '');
+
+    if (net.isIP(hostname) !== 0 || hostname.toLowerCase() === 'localhost') {
+      return companyUrl;
+    }
+
     const base = hostname.split('.')[0] ?? hostname;
     return base.length > 0 ? base.charAt(0).toUpperCase() + base.slice(1) : hostname;
   } catch {
