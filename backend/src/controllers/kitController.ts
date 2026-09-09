@@ -59,7 +59,7 @@ function buildPlaceholderKitBody(jd: string, companyUrl: string, days: number): 
   };
 }
 
-function serializeKit(kit: KitDocument & { _id: unknown }) {
+export function serializeKit(kit: KitDocument & { _id: unknown }) {
   return {
     id: String(kit._id),
     status: kit.status,
