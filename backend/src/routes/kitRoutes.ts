@@ -17,6 +17,7 @@ import {
   regenerateQuestionsCategory,
   regenerateSchedule,
 } from '../controllers/kitRegenerateController.js';
+import { getPracticeSession, reviewFlashcard } from '../controllers/kitPracticeController.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -44,6 +45,9 @@ router.post('/:id/flashcards', addFlashcard);
 router.patch('/:id/flashcards/reorder', reorderFlashcards);
 router.patch('/:id/flashcards/:flashcardId', updateFlashcard);
 router.delete('/:id/flashcards/:flashcardId', deleteFlashcard);
+router.post('/:id/flashcards/:flashcardId/review', reviewFlashcard);
+
+router.get('/:id/practice/session', getPracticeSession);
 
 router.post('/:id/regenerate/company-brief', regenerateCompanyBrief);
 router.post('/:id/regenerate/questions/:category', regenerateQuestionsCategory);

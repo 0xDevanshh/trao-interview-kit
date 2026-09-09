@@ -300,7 +300,7 @@ export async function reorderFlashcards(req: Request, res: Response, next: NextF
   }
 }
 
-const addFlashcardSchema = flashcardSchema.omit({ id: true, source: true });
+const addFlashcardSchema = flashcardSchema.omit({ id: true, source: true, practice: true });
 
 export async function addFlashcard(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -318,7 +318,12 @@ export async function addFlashcard(req: Request, res: Response, next: NextFuncti
     const existingIds = new Set(body.flashcards.map((f) => f.id));
     const id = nextAvailableId(existingIds, 'fc');
 
-    body.flashcards = [...body.flashcards, { ...parsed.data, id, source: 'manual' }];
+    // practice is never trusted from the client, same as source/id — a new
+    // flashcard always starts with no review history.
+    body.flashcards = [
+      ...body.flashcards,
+      { ...parsed.data, id, source: 'manual', practice: { timesReviewed: 0, lastConfidence: null, lastReviewedAt: null } },
+    ];
 
     if (await validateAndSave(kit, res, body)) {
       res.status(201).json({ kit: serializeKit(kit) });

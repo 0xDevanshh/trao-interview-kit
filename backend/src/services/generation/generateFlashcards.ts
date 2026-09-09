@@ -16,6 +16,8 @@ export interface GeneratedFlashcard {
   // Every flashcard this function produces is freshly generated — "edited"/
   // "manual" only ever get set later, by the builder (Phase 8), never here.
   source: 'generated';
+  // A freshly generated flashcard has no review history yet.
+  practice: { timesReviewed: 0; lastConfidence: null; lastReviewedAt: null };
 }
 
 export interface GenerateFlashcardsOptions {
@@ -86,5 +88,6 @@ export async function generateFlashcardsForRequirement(
     back: flashcard.back,
     requirement_ids: [requirement.id],
     source: 'generated' as const,
+    practice: { timesReviewed: 0 as const, lastConfidence: null, lastReviewedAt: null },
   }));
 }

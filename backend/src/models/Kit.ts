@@ -40,6 +40,21 @@ const questionSchema = new Schema(
   { _id: false },
 );
 
+// Practice-mode progress — another extension beyond Appendix A (same
+// pattern as "source"). lastConfidence is intentionally NOT constrained by
+// a Mongoose enum here (unlike e.g. "source"): a nullable enum's
+// interaction with Mongoose's enum validator on null is finicky, and
+// kitSchema.ts's Zod validation is already the authoritative check that
+// runs before every save (see kitEditingUtils.ts's validateAndSave).
+const flashcardPracticeSchema = new Schema(
+  {
+    timesReviewed: { type: Number, required: true, default: 0 },
+    lastConfidence: { type: Number, required: false, default: null },
+    lastReviewedAt: { type: String, required: false, default: null },
+  },
+  { _id: false },
+);
+
 const flashcardSchema = new Schema(
   {
     id: { type: String, required: true },
@@ -47,6 +62,7 @@ const flashcardSchema = new Schema(
     back: { type: String, required: true },
     requirement_ids: { type: [String], required: true, default: [] },
     source: editableItemSourceField,
+    practice: { type: flashcardPracticeSchema, required: true, default: () => ({}) },
   },
   { _id: false },
 );

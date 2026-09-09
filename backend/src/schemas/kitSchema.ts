@@ -29,12 +29,28 @@ export const questionSchema = z.object({
   source: editableItemSourceSchema,
 });
 
+// Practice-mode progress, another extension beyond Appendix A (same
+// pattern as "source" above). 1 = low confidence ("didn't know it"), 3 =
+// high confidence ("knew it cold") — this scale is used consistently
+// everywhere it appears, including the frontend. Defaults describe a
+// flashcard that has never been reviewed; any flashcard saved before this
+// field existed correctly comes back with these defaults rather than
+// fabricated review history.
+export const flashcardPracticeSchema = z
+  .object({
+    timesReviewed: z.number().int().nonnegative().default(0),
+    lastConfidence: z.union([z.literal(1), z.literal(2), z.literal(3)]).nullable().default(null),
+    lastReviewedAt: isoDateString.nullable().default(null),
+  })
+  .default({ timesReviewed: 0, lastConfidence: null, lastReviewedAt: null });
+
 export const flashcardSchema = z.object({
   id: z.string(),
   front: z.string(),
   back: z.string(),
   requirement_ids: z.array(z.string()),
   source: editableItemSourceSchema,
+  practice: flashcardPracticeSchema,
 });
 
 export const scheduleDaySchema = z.object({
@@ -83,3 +99,4 @@ export type KitQuestion = z.infer<typeof questionSchema>;
 export type KitFlashcard = z.infer<typeof flashcardSchema>;
 export type KitScheduleDay = z.infer<typeof scheduleDaySchema>;
 export type EditableItemSource = z.infer<typeof editableItemSourceSchema>;
+export type FlashcardPractice = z.infer<typeof flashcardPracticeSchema>;
