@@ -1,5 +1,5 @@
 import { KitModel } from '../models/Kit.js';
-import { generateKitCore, KitGenerationError } from './generateKitCore.js';
+import { generateKitCore, KitGenerationError, type RetrievalCache } from './generateKitCore.js';
 import type { Kit as KitAppendixA } from '../schemas/kitSchema.js';
 
 interface KitFailure {
@@ -25,7 +25,7 @@ async function updateKitStatus(kitId: string, status: 'generating' | 'failed', e
   }
 }
 
-async function saveReadyKit(kitId: string, assembled: KitAppendixA): Promise<void> {
+async function saveReadyKit(kitId: string, assembled: KitAppendixA, retrievalCache: RetrievalCache): Promise<void> {
   const kit = await KitModel.findById(kitId);
   if (!kit) {
     throw new Error(`Kit ${kitId} not found`);
@@ -46,6 +46,7 @@ async function saveReadyKit(kitId: string, assembled: KitAppendixA): Promise<voi
   kitBody.flashcards = assembled.flashcards;
   kitBody.schedule = assembled.schedule;
   kitBody.coverage = assembled.coverage;
+  kitBody._retrievalCache = retrievalCache;
 
   await kit.save();
 }
@@ -65,9 +66,9 @@ export async function generateKit(
   try {
     await updateKitStatus(kitId, 'generating');
 
-    const assembled = await generateKitCore(jd, companyUrl, daysAvailable);
+    const { kit: assembled, retrievalCache } = await generateKitCore(jd, companyUrl, daysAvailable);
 
-    await saveReadyKit(kitId, assembled);
+    await saveReadyKit(kitId, assembled, retrievalCache);
   } catch (err) {
     if (err instanceof KitGenerationError) {
       await updateKitStatus(kitId, 'failed', {

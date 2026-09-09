@@ -42,7 +42,7 @@ function errorMessage(err: unknown): string {
  */
 export async function runEvaluationCase(input: EvaluateCaseInput): Promise<EvaluateCaseResult> {
   try {
-    const kit = await generateKitCore(input.jd, input.company_url, input.days);
+    const { kit } = await generateKitCore(input.jd, input.company_url, input.days);
     return { id: input.id, status: 'ok', kit, error: null };
   } catch (err) {
     return { id: input.id, status: 'failed', kit: null, error: errorMessage(err) };

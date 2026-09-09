@@ -117,6 +117,22 @@ const errorSchema = new Schema(
   { _id: false },
 );
 
+const retrievedPageSchema = new Schema(
+  {
+    url: { type: String, required: true },
+    text: { type: String, required: true },
+  },
+  { _id: false },
+);
+
+const retrievalCacheSchema = new Schema(
+  {
+    company_pages: { type: [retrievedPageSchema], required: true, default: [] },
+    discussion_snippets: { type: [retrievedPageSchema], required: true, default: [] },
+  },
+  { _id: false },
+);
+
 const kitSchema = new Schema(
   {
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -132,6 +148,12 @@ const kitSchema = new Schema(
     // re-run the pipeline (including "Retry" after a failure) without the
     // client having to resend the original JD.
     jd: { type: String, required: false },
+    // Internal only, excluded from serializeKit's response — the raw
+    // company-page text and discussion snippets from the original
+    // retrieval, cached so POST /:id/regenerate/company-brief can re-run
+    // generateCompanyBrief without re-crawling the company's site (and
+    // re-running discussion search) on every regenerate.
+    _retrievalCache: { type: retrievalCacheSchema, required: false },
     source: { type: sourceSchema, required: false },
     company_brief: { type: companyBriefSchema, required: false },
     role: { type: roleSchema, required: false },

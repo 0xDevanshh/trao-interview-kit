@@ -79,7 +79,7 @@ function guessCompanyName(companyUrl: string): string {
   }
 }
 
-function buildHiringProcessContext(discussionSnippets: { text: string }[]): string {
+export function buildHiringProcessContext(discussionSnippets: { text: string }[]): string {
   const combined = discussionSnippets.map((snippet) => snippet.text).join('\n\n');
   return combined.slice(0, HIRING_PROCESS_CONTEXT_BUDGET);
 }
@@ -142,14 +142,31 @@ async function generateAllFlashcards(requirements: ExtractedRequirement[]): Prom
   return batches.flat();
 }
 
+export interface RetrievalCache {
+  company_pages: { url: string; text: string }[];
+  discussion_snippets: { url: string; text: string }[];
+}
+
+export interface GeneratedKit {
+  kit: KitAppendixA;
+  /**
+   * The raw retrieval this run used to write the company brief — callers
+   * that persist the kit (generateKit.ts) cache this on the Kit document so
+   * a later company-brief regenerate doesn't need to re-crawl the company's
+   * site and re-run discussion search from scratch.
+   */
+  retrievalCache: RetrievalCache;
+}
+
 /**
  * The DB-free heart of kit generation: takes raw inputs, returns an
- * assembled kit that has already passed validateKitStructure. Both the
- * route/orchestrator (generateKit.ts, which persists to Mongo) and the
- * batch script (scripts/evaluate.ts) call this exact function — there is no
- * separate, simplified pipeline for batch mode.
+ * assembled kit that has already passed validateKitStructure (plus the
+ * retrieval used to produce its company brief). Both the route/orchestrator
+ * (generateKit.ts, which persists to Mongo) and the batch script
+ * (scripts/evaluate.ts) call this exact function — there is no separate,
+ * simplified pipeline for batch mode.
  */
-export async function generateKitCore(jd: string, companyUrl: string, daysAvailable: number): Promise<KitAppendixA> {
+export async function generateKitCore(jd: string, companyUrl: string, daysAvailable: number): Promise<GeneratedKit> {
   let extracted;
   try {
     extracted = await extractRequirements(jd);
@@ -232,5 +249,11 @@ export async function generateKitCore(jd: string, companyUrl: string, daysAvaila
     throw new KitGenerationError('Assembled kit failed structural validation', 'INVALID_KIT_STRUCTURE', validation.errors);
   }
 
-  return assembled;
+  return {
+    kit: assembled,
+    retrievalCache: {
+      company_pages: retrieval.company_pages,
+      discussion_snippets: retrieval.discussion_snippets,
+    },
+  };
 }

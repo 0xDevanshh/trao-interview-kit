@@ -12,6 +12,11 @@ import {
   updateFlashcard,
   updateQuestion,
 } from '../controllers/kitItemsController.js';
+import {
+  regenerateCompanyBrief,
+  regenerateQuestionsCategory,
+  regenerateSchedule,
+} from '../controllers/kitRegenerateController.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 
 const router = Router();
@@ -39,5 +44,9 @@ router.post('/:id/flashcards', addFlashcard);
 router.patch('/:id/flashcards/reorder', reorderFlashcards);
 router.patch('/:id/flashcards/:flashcardId', updateFlashcard);
 router.delete('/:id/flashcards/:flashcardId', deleteFlashcard);
+
+router.post('/:id/regenerate/company-brief', regenerateCompanyBrief);
+router.post('/:id/regenerate/questions/:category', regenerateQuestionsCategory);
+router.post('/:id/regenerate/schedule', regenerateSchedule);
 
 export default router;

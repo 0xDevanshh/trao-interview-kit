@@ -1,111 +1,16 @@
 import type { NextFunction, Request, Response } from 'express';
-import { isValidObjectId, type HydratedDocument } from 'mongoose';
 import { z } from 'zod';
-import { KitModel, type KitDocument } from '../models/Kit.js';
-import { validateKitStructure } from '../schemas/kitValidation.js';
-import { questionSchema, flashcardSchema, type Kit as KitAppendixA } from '../schemas/kitSchema.js';
+import { questionSchema, flashcardSchema } from '../schemas/kitSchema.js';
 import { serializeKit } from './kitController.js';
-
-type KitDoc = HydratedDocument<KitDocument>;
-
-async function loadOwnedKit(req: Request, res: Response): Promise<KitDoc | null> {
-  const ownerId = req.userId;
-  if (!ownerId) {
-    res.status(401).json({ error: { code: 'UNAUTHENTICATED', message: 'No token provided' } });
-    return null;
-  }
-
-  const { id } = req.params;
-  if (!id || !isValidObjectId(id)) {
-    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Kit not found' } });
-    return null;
-  }
-
-  const kit = await KitModel.findById(id);
-  if (!kit || kit.ownerId.toString() !== ownerId) {
-    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Kit not found' } });
-    return null;
-  }
-
-  return kit;
-}
-
-/** True once the kit actually has generated content to mutate. */
-function isEditable(kit: KitDoc): boolean {
-  return kit.questions !== undefined && kit.flashcards !== undefined;
-}
-
-function respondNotEditable(res: Response): void {
-  res.status(409).json({
-    error: { code: 'NOT_EDITABLE', message: 'This kit has no generated content to edit yet' },
-  });
-}
-
-/** Plain, JSON-safe snapshot of a kit's Appendix A body, for building a
- * mutated candidate to validate before saving. */
-function currentBody(kit: KitDoc): KitAppendixA {
-  return JSON.parse(
-    JSON.stringify({
-      source: kit.source,
-      company_brief: kit.company_brief,
-      role: kit.role,
-      questions: kit.questions,
-      flashcards: kit.flashcards,
-      schedule: kit.schedule,
-      coverage: kit.coverage,
-    }),
-  );
-}
-
-/** Applies a validated body onto the kit document and saves, or responds
- * 422 with the validator's errors instead. Returns whether it saved. */
-async function validateAndSave(kit: KitDoc, res: Response, body: KitAppendixA): Promise<boolean> {
-  const result = validateKitStructure(body);
-  if (!result.valid) {
-    res.status(422).json({ error: { code: 'VALIDATION_ERROR', message: 'Kit failed validation', errors: result.errors } });
-    return false;
-  }
-
-  const kitBody = kit as unknown as Record<string, unknown>;
-  kitBody.source = body.source;
-  kitBody.company_brief = body.company_brief;
-  kitBody.role = body.role;
-  kitBody.questions = body.questions;
-  kitBody.flashcards = body.flashcards;
-  kitBody.schedule = body.schedule;
-  kitBody.coverage = body.coverage;
-
-  await kit.save();
-  return true;
-}
-
-/**
- * Merges only the defined keys of `updates` onto `base`. A plain `{...base,
- * ...updates}` spread would type (and, if updates came straight from a
- * zod `.partial()` parse, potentially behave) as if every partial field
- * were being overwritten with `undefined` when omitted — this keeps
- * omitted fields untouched instead.
- */
-type LooseUpdates<T> = { [K in keyof T]?: T[K] | undefined };
-
-function mergeDefined<T extends object>(base: T, updates: LooseUpdates<T>): T {
-  const result = { ...base };
-  for (const key of Object.keys(updates) as (keyof T)[]) {
-    const value = updates[key];
-    if (value !== undefined) {
-      result[key] = value as T[keyof T];
-    }
-  }
-  return result;
-}
-
-function nextAvailableId(existingIds: Set<string>, prefix: string): string {
-  let n = 1;
-  while (existingIds.has(`${prefix}${n}`)) {
-    n += 1;
-  }
-  return `${prefix}${n}`;
-}
+import {
+  currentBody,
+  isEditable,
+  loadOwnedKit,
+  mergeDefined,
+  nextAvailableId,
+  respondNotEditable,
+  validateAndSave,
+} from './kitEditingUtils.js';
 
 // ---------------------------------------------------------------------------
 // Questions
