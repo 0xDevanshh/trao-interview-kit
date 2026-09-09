@@ -40,8 +40,36 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Groq's own json_object-mode validator occasionally rejects the model's
+ * own output as malformed JSON (400, code "json_validate_failed") — seen in
+ * practice on larger multi-question responses. This is a sampling artifact,
+ * not a request-shape problem, so unlike a normal 400 it's very likely to
+ * succeed on a fresh attempt and is worth retrying.
+ */
+function isJsonValidationFailure(err: unknown): boolean {
+  if (!(err instanceof APIError) || err.status !== 400) {
+    return false;
+  }
+  const body = err.error as { error?: { code?: string } } | undefined;
+  return body?.error?.code === 'json_validate_failed';
+}
+
 function isRetryable(err: unknown): err is APIError {
-  return err instanceof APIError && (err.status === 429 || (typeof err.status === 'number' && err.status >= 500));
+  return (
+    err instanceof APIError &&
+    (err.status === 429 || (typeof err.status === 'number' && err.status >= 500) || isJsonValidationFailure(err))
+  );
+}
+
+function describeError(err: unknown): string {
+  if (err instanceof APIError) {
+    return `status ${err.status ?? 'unknown'}: ${err.message}`;
+  }
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return String(err);
 }
 
 function retryDelayMs(err: APIError, attempt: number): number {
@@ -103,9 +131,13 @@ export async function generateJSON(
         throw new LLMError('RATE_LIMITED', 'Groq rate limit exceeded after retries', err);
       }
 
-      throw new LLMError('PROVIDER_ERROR', 'Groq request failed', err);
+      throw new LLMError('PROVIDER_ERROR', `Groq request failed: ${describeError(err)}`, err);
     }
   }
 
-  throw new LLMError('PROVIDER_ERROR', 'Groq request failed after retries exhausted', lastError);
+  throw new LLMError(
+    'PROVIDER_ERROR',
+    `Groq request failed after retries exhausted: ${describeError(lastError)}`,
+    lastError,
+  );
 }
